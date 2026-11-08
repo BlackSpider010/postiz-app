@@ -227,7 +227,9 @@ const CommentComposer: FC<{
           return;
         }
 
-        form.reset({ content: '' });
+        if (!approve) {
+          form.reset({ content: '' });
+        }
         if (anchor && !approve) {
           setPending(null);
         }
@@ -306,7 +308,9 @@ const CommentComposer: FC<{
               loading={loading}
               onClick={() => {
                 approveRef.current = true;
-                form.handleSubmit(submit)();
+                form.handleSubmit(submit)().finally(() => {
+                  approveRef.current = false;
+                });
               }}
             >
               {t('approve', 'Approve')}
