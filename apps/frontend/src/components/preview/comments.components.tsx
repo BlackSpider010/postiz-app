@@ -133,6 +133,7 @@ const CommentComposer: FC<{
   const { previewId, pending, setPending, mutate } = usePreviewComments();
   const [loading, setLoading] = useState(false);
   const form = useForm({ values: { content: '' } });
+  const approveRef = useRef(false);
   const anchor = parentId ? null : pending;
 
   const askForName = useCallback(
@@ -160,7 +161,9 @@ const CommentComposer: FC<{
 
   const submit = useCallback(
     async (values: { content: string }) => {
-      const content = values.content.trim();
+      const approve = approveRef.current;
+      approveRef.current = false;
+      const content = approve ? '✅ APPROVED' : values.content.trim();
       if (!content) {
         return;
       }
@@ -200,7 +203,7 @@ const CommentComposer: FC<{
             body: JSON.stringify({
               content,
               ...(parentId ? { parentId } : {}),
-              ...(anchor
+              ...(anchor && !approve
                 ? {
                     postId: anchor.postId,
                     anchorStart: anchor.start,
@@ -225,7 +228,7 @@ const CommentComposer: FC<{
         }
 
         form.reset({ content: '' });
-        if (anchor) {
+        if (anchor && !approve) {
           setPending(null);
         }
         await mutate();
@@ -294,6 +297,19 @@ const CommentComposer: FC<{
           {!!onDone && (
             <Button type="button" secondary={true} onClick={onDone}>
               {t('cancel', 'Cancel')}
+            </Button>
+          )}
+          {!parentId && (
+            <Button
+              type="button"
+              secondary={true}
+              loading={loading}
+              onClick={() => {
+                approveRef.current = true;
+                form.handleSubmit(submit)();
+              }}
+            >
+              {t('approve', 'Approve')}
             </Button>
           )}
           <Button type="submit" loading={loading}>
